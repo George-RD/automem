@@ -127,6 +127,7 @@ from automem.config import (
     CLASSIFICATION_MODEL,
     CLASSIFICATION_REASONING_EFFORT,
     COLLECTION_NAME,
+    get_openai_token_params,
     CONSOLIDATION_ARCHIVE_THRESHOLD,
     CONSOLIDATION_CLUSTER_INTERVAL_SECONDS,
     CONSOLIDATION_CONTROL_LABEL,
@@ -786,19 +787,9 @@ Return JSON with: {"type": "<type>", "confidence": <0.0-1.0>}"""
             return None
 
         try:
-            # Use appropriate token parameter based on model family
-            # OpenAI uses max_tokens for most models, max_completion_tokens for o-series
-            if CLASSIFICATION_MODEL.startswith("o"):  # o-series (o1, o3, etc.)
-                token_param = {"max_completion_tokens": 50}
-            else:  # gpt-4, gpt-5, etc. all use max_tokens
-                token_param = {"max_tokens": 50}
-
-            # Add reasoning effort for models that support it (o-series, gpt-5+)
-            if CLASSIFICATION_REASONING_EFFORT and any(
-                CLASSIFICATION_MODEL.startswith(p) for p in ("o", "gpt-5")
-            ):
-                token_param["reasoning"] = {"effort": CLASSIFICATION_REASONING_EFFORT}
-
+            token_params = get_openai_token_params(
+                CLASSIFICATION_MODEL, 50, CLASSIFICATION_REASONING_EFFORT
+            )
             response = state.openai_client.chat.completions.create(
                 model=CLASSIFICATION_MODEL,
                 messages=[
@@ -807,7 +798,7 @@ Return JSON with: {"type": "<type>", "confidence": <0.0-1.0>}"""
                 ],
                 response_format={"type": "json_object"},
                 temperature=0.3,
-                **token_param,
+                **token_params,
             )
 
             result = json.loads(response.choices[0].message.content)

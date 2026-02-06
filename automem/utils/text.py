@@ -4,6 +4,8 @@ import logging
 import re
 from typing import Any, List, Optional
 
+from automem.config import get_openai_token_params
+
 logger = logging.getLogger(__name__)
 
 # Common stopwords to exclude from search tokens
@@ -147,12 +149,8 @@ def summarize_content(
         # Estimate tokens from target character length (~4 chars/token), cap at 150
         token_limit = min(150, max(1, int(target_length / 4)))
 
-        # Use appropriate token parameter based on model family
-        # OpenAI uses max_tokens for most models, max_completion_tokens for o-series
-        if model.startswith("o"):  # o-series (o1, o3, etc.)
-            token_param = {"max_completion_tokens": token_limit}
-        else:  # gpt-4, gpt-5, etc. all use max_tokens
-            token_param = {"max_tokens": token_limit}
+        # Use helper for model-appropriate token parameters
+        token_params = get_openai_token_params(model, token_limit)
 
         response = openai_client.chat.completions.create(
             model=model,
@@ -161,7 +159,7 @@ def summarize_content(
                 {"role": "user", "content": content},
             ],
             temperature=0.3,
-            **token_param,
+            **token_params,
         )
 
         summary = response.choices[0].message.content.strip()

@@ -83,8 +83,46 @@ EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-3-large")
 CLASSIFICATION_MODEL = os.getenv("CLASSIFICATION_MODEL", "gpt-4o-mini")
 # Optional reasoning effort for o-series and gpt-5+ models (low, medium, high, xhigh)
 # If not set, reasoning is not used. Tested with gpt-5.3-codex at medium effort.
+VALID_REASONING_EFFORTS = {"low", "medium", "high", "xhigh"}
 _reasoning_raw = os.getenv("CLASSIFICATION_REASONING_EFFORT", "").strip().lower()
-CLASSIFICATION_REASONING_EFFORT = _reasoning_raw if _reasoning_raw in {"low", "medium", "high", "xhigh"} else None
+CLASSIFICATION_REASONING_EFFORT = _reasoning_raw if _reasoning_raw in VALID_REASONING_EFFORTS else None
+
+# Models that support the reasoning effort parameter
+REASONING_MODEL_PREFIXES = ("o1", "o3", "gpt-5")
+
+
+def supports_reasoning(model: str) -> bool:
+    """Check if a model supports the reasoning effort parameter."""
+    return any(model.startswith(prefix) for prefix in REASONING_MODEL_PREFIXES)
+
+
+def get_openai_token_params(
+    model: str,
+    token_limit: int,
+    reasoning_effort: str | None = None,
+) -> dict:
+    """Build token parameters dict for OpenAI API calls.
+
+    Args:
+        model: The model name (e.g., 'gpt-4o-mini', 'gpt-5.2', 'o1')
+        token_limit: Maximum tokens for completion
+        reasoning_effort: Optional reasoning effort level (low/medium/high/xhigh)
+
+    Returns:
+        Dict with appropriate token and reasoning parameters for the model
+    """
+    # OpenAI uses max_completion_tokens for o-series, max_tokens for everything else
+    if model.startswith("o"):
+        params: dict = {"max_completion_tokens": token_limit}
+    else:
+        params = {"max_tokens": token_limit}
+
+    # Add reasoning effort for models that support it
+    if reasoning_effort and supports_reasoning(model):
+        params["reasoning"] = {"effort": reasoning_effort}
+
+    return params
+
 
 RECALL_RELATION_LIMIT = int(os.getenv("RECALL_RELATION_LIMIT", "5"))
 RECALL_EXPANSION_LIMIT = int(os.getenv("RECALL_EXPANSION_LIMIT", "25"))
