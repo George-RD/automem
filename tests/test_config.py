@@ -49,7 +49,7 @@ class TestGetOpenaiTokenParams:
 
     def test_o_series_with_reasoning(self):
         params = get_openai_token_params("o1", 100, "medium")
-        assert params == {"max_completion_tokens": 100, "reasoning": {"effort": "medium"}}
+        assert params == {"max_completion_tokens": 100, "reasoning_effort": "medium"}
 
     def test_gpt4_uses_max_tokens(self):
         params = get_openai_token_params("gpt-4o-mini", 100)
@@ -61,7 +61,7 @@ class TestGetOpenaiTokenParams:
 
     def test_gpt5_with_reasoning(self):
         params = get_openai_token_params("gpt-5.2", 100, "high")
-        assert params == {"max_tokens": 100, "reasoning": {"effort": "high"}}
+        assert params == {"max_tokens": 100, "reasoning_effort": "high"}
 
     def test_gpt4_ignores_reasoning(self):
         # GPT-4 doesn't support reasoning, so it should be ignored
@@ -82,7 +82,34 @@ class TestGetOpenaiTokenParams:
     def test_all_reasoning_levels(self):
         for level in ["low", "medium", "high", "xhigh"]:
             params = get_openai_token_params("o3", 50, level)
-            assert params["reasoning"]["effort"] == level
+            assert params["reasoning_effort"] == level
+
+    def test_unvalidated_reasoning_string_passes_through(self):
+        # get_openai_token_params does not validate reasoning values;
+        # validation happens at config load time via VALID_REASONING_EFFORTS.
+        # Document that arbitrary strings pass through unchanged.
+        params = get_openai_token_params("o3", 50, "invalid")
+        assert params["reasoning_effort"] == "invalid"
+
+    def test_temperature_included_for_gpt4(self):
+        params = get_openai_token_params("gpt-4o-mini", 100, temperature=0.3)
+        assert params["temperature"] == 0.3
+
+    def test_temperature_included_for_gpt5(self):
+        params = get_openai_token_params("gpt-5.2", 100, temperature=0.5)
+        assert params["temperature"] == 0.5
+
+    def test_temperature_excluded_for_o_series(self):
+        params = get_openai_token_params("o1", 100, temperature=0.3)
+        assert "temperature" not in params
+
+    def test_temperature_excluded_for_o3(self):
+        params = get_openai_token_params("o3-mini", 100, temperature=0.7)
+        assert "temperature" not in params
+
+    def test_no_temperature_when_none(self):
+        params = get_openai_token_params("gpt-4o-mini", 100)
+        assert "temperature" not in params
 
 
 class TestNormalizeMemoryType:

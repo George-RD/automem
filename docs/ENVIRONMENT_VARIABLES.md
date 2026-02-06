@@ -176,6 +176,7 @@ VECTOR_SIZE=768
 **Upgrade safety**: Changing embedding dimensions requires a full re-embed. AutoMem refuses to start if `VECTOR_SIZE` does not match the existing Qdrant collection; set the value to your current dimension (usually `768`) before migrating, then switch to `3072` after running `scripts/reembed_embeddings.py`. To override strict mode and adopt the existing collection dimension, set `VECTOR_SIZE_AUTODETECT=true` (use only if you understand the risk of dimension drift).
 
 **Classification Model Comparison (Feb 2026):**
+
 | Model | Input | Output | Reasoning | Notes |
 |-------|-------|--------|-----------|-------|
 | `gpt-4o-mini` | $0.15/1M | $0.60/1M | No | **Default** - Fast, cheap, good enough |
@@ -183,6 +184,7 @@ VECTOR_SIZE=768
 | `gpt-5.3-codex` | ~$1.75/1M | ~$14/1M | Yes | **Tested** - Best classification quality with `medium` reasoning |
 
 **Reasoning Effort:** For o-series (o1, o3) and gpt-5+ models, you can enable reasoning to improve classification quality:
+
 ```bash
 CLASSIFICATION_MODEL=gpt-5.3-codex
 CLASSIFICATION_REASONING_EFFORT=medium  # low, medium, high, xhigh

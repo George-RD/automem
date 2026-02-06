@@ -100,6 +100,7 @@ def get_openai_token_params(
     model: str,
     token_limit: int,
     reasoning_effort: str | None = None,
+    temperature: float | None = None,
 ) -> dict:
     """Build token parameters dict for OpenAI API calls.
 
@@ -107,19 +108,28 @@ def get_openai_token_params(
         model: The model name (e.g., 'gpt-4o-mini', 'gpt-5.2', 'o1')
         token_limit: Maximum tokens for completion
         reasoning_effort: Optional reasoning effort level (low/medium/high/xhigh)
+        temperature: Optional temperature value; excluded for o-series models
+            which do not support it.
 
     Returns:
-        Dict with appropriate token and reasoning parameters for the model
+        Dict with appropriate token, reasoning, and temperature parameters
+        for the model.
     """
+    is_o_series = model.startswith("o")
+
     # OpenAI uses max_completion_tokens for o-series, max_tokens for everything else
-    if model.startswith("o"):
+    if is_o_series:
         params: dict = {"max_completion_tokens": token_limit}
     else:
         params = {"max_tokens": token_limit}
 
-    # Add reasoning effort for models that support it
+    # Add reasoning effort for models that support it (top-level param for Chat Completions)
     if reasoning_effort and supports_reasoning(model):
-        params["reasoning"] = {"effort": reasoning_effort}
+        params["reasoning_effort"] = reasoning_effort
+
+    # o-series models do not support the temperature parameter
+    if temperature is not None and not is_o_series:
+        params["temperature"] = temperature
 
     return params
 

@@ -149,8 +149,8 @@ def summarize_content(
         # Estimate tokens from target character length (~4 chars/token), cap at 150
         token_limit = min(150, max(1, int(target_length / 4)))
 
-        # Use helper for model-appropriate token parameters
-        token_params = get_openai_token_params(model, token_limit)
+        # Use helper for model-appropriate token parameters (incl. temperature)
+        token_params = get_openai_token_params(model, token_limit, temperature=0.3)
 
         response = openai_client.chat.completions.create(
             model=model,
@@ -158,7 +158,6 @@ def summarize_content(
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": content},
             ],
-            temperature=0.3,
             **token_params,
         )
 
