@@ -788,7 +788,8 @@ Return JSON with: {"type": "<type>", "confidence": <0.0-1.0>}"""
 
         try:
             token_params = get_openai_token_params(
-                CLASSIFICATION_MODEL, 50, CLASSIFICATION_REASONING_EFFORT
+                CLASSIFICATION_MODEL, 50, CLASSIFICATION_REASONING_EFFORT,
+                temperature=0.3,
             )
             response = state.openai_client.chat.completions.create(
                 model=CLASSIFICATION_MODEL,
@@ -797,7 +798,6 @@ Return JSON with: {"type": "<type>", "confidence": <0.0-1.0>}"""
                     {"role": "user", "content": content[:1000]},  # Limit to 1000 chars
                 ],
                 response_format={"type": "json_object"},
-                temperature=0.3,
                 **token_params,
             )
 
