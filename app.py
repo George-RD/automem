@@ -125,7 +125,9 @@ from automem.config import (
     ALLOWED_RELATIONS,
     API_TOKEN,
     CLASSIFICATION_MODEL,
+    CLASSIFICATION_REASONING_EFFORT,
     COLLECTION_NAME,
+    get_openai_token_params,
     CONSOLIDATION_ARCHIVE_THRESHOLD,
     CONSOLIDATION_CLUSTER_INTERVAL_SECONDS,
     CONSOLIDATION_CONTROL_LABEL,
@@ -810,13 +812,10 @@ Return JSON with: {"type": "<type>", "confidence": <0.0-1.0>}"""
             return None
 
         try:
-            # Use appropriate token parameter based on model family
-            if CLASSIFICATION_MODEL.startswith("o"):  # o-series (o1, o3, etc.)
-                token_param = {"max_completion_tokens": 50}
-            elif CLASSIFICATION_MODEL.startswith("gpt-5"):  # gpt-5 family
-                token_param = {"max_output_tokens": 50}
-            else:  # gpt-4o-mini, gpt-4, etc.
-                token_param = {"max_tokens": 50}
+            token_params = get_openai_token_params(
+                CLASSIFICATION_MODEL, 50, CLASSIFICATION_REASONING_EFFORT,
+                temperature=0.3,
+            )
             response = state.openai_client.chat.completions.create(
                 model=CLASSIFICATION_MODEL,
                 messages=[
@@ -824,8 +823,7 @@ Return JSON with: {"type": "<type>", "confidence": <0.0-1.0>}"""
                     {"role": "user", "content": content[:1000]},  # Limit to 1000 chars
                 ],
                 response_format={"type": "json_object"},
-                temperature=0.3,
-                **token_param,
+                **token_params,
             )
 
             result = json.loads(response.choices[0].message.content)
