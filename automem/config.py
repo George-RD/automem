@@ -81,6 +81,10 @@ ENRICHMENT_SPACY_MODEL = os.getenv("ENRICHMENT_SPACY_MODEL", "en_core_web_sm")
 # text-embedding-3-small (768d): Cheaper, use VECTOR_SIZE=768 if switching
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-3-large")
 CLASSIFICATION_MODEL = os.getenv("CLASSIFICATION_MODEL", "gpt-4o-mini")
+# Optional reasoning effort for o-series and gpt-5+ models (low, medium, high, xhigh)
+# If not set, reasoning is not used. Tested with gpt-5.3-codex at medium effort.
+_reasoning_raw = os.getenv("CLASSIFICATION_REASONING_EFFORT", "").strip().lower()
+CLASSIFICATION_REASONING_EFFORT = _reasoning_raw if _reasoning_raw in {"low", "medium", "high", "xhigh"} else None
 
 RECALL_RELATION_LIMIT = int(os.getenv("RECALL_RELATION_LIMIT", "5"))
 RECALL_EXPANSION_LIMIT = int(os.getenv("RECALL_EXPANSION_LIMIT", "25"))

@@ -148,11 +148,10 @@ def summarize_content(
         token_limit = min(150, max(1, int(target_length / 4)))
 
         # Use appropriate token parameter based on model family
+        # OpenAI uses max_tokens for most models, max_completion_tokens for o-series
         if model.startswith("o"):  # o-series (o1, o3, etc.)
             token_param = {"max_completion_tokens": token_limit}
-        elif model.startswith("gpt-5"):  # gpt-5 family
-            token_param = {"max_output_tokens": token_limit}
-        else:  # gpt-4o-mini, gpt-4, etc.
+        else:  # gpt-4, gpt-5, etc. all use max_tokens
             token_param = {"max_tokens": token_limit}
 
         response = openai_client.chat.completions.create(

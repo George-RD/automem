@@ -158,7 +158,8 @@ Controls which OpenAI models are used for embeddings and classification.
 | `EMBEDDING_MODEL` | OpenAI embedding model | `text-embedding-3-large` | `text-embedding-3-large` (3072d), `text-embedding-3-small` (768d) |
 | `VECTOR_SIZE` | Embedding dimension | `3072` | Must match embedding model |
 | `VECTOR_SIZE_AUTODETECT` | Adopt existing collection dimension instead of failing on mismatch | `false` | `true` |
-| `CLASSIFICATION_MODEL` | LLM for memory type classification | `gpt-4o-mini` | `gpt-4o-mini`, `gpt-4.1`, `gpt-5.1` |
+| `CLASSIFICATION_MODEL` | LLM for memory type classification | `gpt-4o-mini` | `gpt-4o-mini`, `gpt-4.1`, `gpt-5.2`, `gpt-5.3-codex` |
+| `CLASSIFICATION_REASONING_EFFORT` | Reasoning effort for o-series/gpt-5+ models | - (disabled) | `low`, `medium`, `high`, `xhigh` |
 
 **Embedding Model Comparison:**
 | Model | Dimensions | Cost/1M tokens | Quality | Use Case |
@@ -174,12 +175,22 @@ VECTOR_SIZE=768
 
 **Upgrade safety**: Changing embedding dimensions requires a full re-embed. AutoMem refuses to start if `VECTOR_SIZE` does not match the existing Qdrant collection; set the value to your current dimension (usually `768`) before migrating, then switch to `3072` after running `scripts/reembed_embeddings.py`. To override strict mode and adopt the existing collection dimension, set `VECTOR_SIZE_AUTODETECT=true` (use only if you understand the risk of dimension drift).
 
-**Classification Model Pricing (Dec 2025):**
-| Model | Input | Output | Notes |
-|-------|-------|--------|-------|
-| `gpt-4o-mini` | $0.15/1M | $0.60/1M | **Default** - Good enough for classification |
-| `gpt-4.1` | ~$2/1M | ~$8/1M | Better reasoning |
-| `gpt-5.1` | $1.25/1M | $10/1M | Best reasoning, use for benchmarks |
+**Classification Model Comparison (Feb 2026):**
+| Model | Input | Output | Reasoning | Notes |
+|-------|-------|--------|-----------|-------|
+| `gpt-4o-mini` | $0.15/1M | $0.60/1M | No | **Default** - Fast, cheap, good enough |
+| `gpt-5.2` | $1.75/1M | $14/1M | Yes | Better reasoning, supports `CLASSIFICATION_REASONING_EFFORT` |
+| `gpt-5.3-codex` | ~$1.75/1M | ~$14/1M | Yes | **Tested** - Best classification quality with `medium` reasoning |
+
+**Reasoning Effort:** For o-series (o1, o3) and gpt-5+ models, you can enable reasoning to improve classification quality:
+```bash
+CLASSIFICATION_MODEL=gpt-5.3-codex
+CLASSIFICATION_REASONING_EFFORT=medium  # low, medium, high, xhigh
+```
+
+In blind testing, `gpt-5.3-codex` with `medium` reasoning scored 6.3/10 vs `gpt-5.2` at 5.2/10 for memory classification accuracy. The `medium` setting balances quality and latency - use `high` or `xhigh` for maximum accuracy at higher cost/latency.
+
+**Note:** If `CLASSIFICATION_REASONING_EFFORT` is not set, reasoning is disabled (safe for models that don't support it).
 
 **⚠️ Changing embedding models requires re-embedding all memories.** See [Re-embedding Guide](#re-embedding-memories) below.
 
